@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #pragma pack(push, 1)
 typedef struct {
@@ -11,7 +12,7 @@ typedef struct {
     uint32_t filesize;            // размер BMP файла в байтах
     uint16_t reserved1;           // зарезервированное пространство
     uint16_t reserved2;           //
-    uint32_t pixelArrOffset;      // смещение (нач. адрес байта где находится массив пикселей)
+    uint32_t  pixelArrOffset;        // смещение (нач. адрес байта где находится массив пикселей)
 } BitmapFileHeader;
 
 typedef struct {
@@ -35,13 +36,11 @@ typedef struct {
 } RGB;
 #pragma pack(pop)
 
-//void chk_frd_fwrt_err(size_t ret, const char* msg, uint32_t line, 
-//                      const char* func_name, FILE* fd, const size_t size);
-size_t read_bmp(RGB*** arr, const char* file_name, 
-               BitmapFileHeader* bmfh, BitmapInfoHeader* bmif);
+size_t read_bmp(const char* file_name, RGB*** arr, 
+                BitmapFileHeader* bmfh, BitmapInfoHeader* bmif);
 void print_file_header(BitmapFileHeader header);
 void print_info_header(BitmapInfoHeader header);
-size_t write_hmp(const char* file_name, RGB** arr, 
-              int H, int W, BitmapFileHeader bmfh, BitmapInfoHeader bmif);
+size_t write_bmp(const char* file_name, RGB*** arr, 
+                 const BitmapFileHeader* bmfh, const BitmapInfoHeader* bmif);
 
 #endif

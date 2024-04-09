@@ -11,7 +11,7 @@ void print_help(char* exe_name)
 {
     printf("Usage: %s [OPTIONS] FILE\n", exe_name);
     printf("%4s, %-20s  %-30s\n", "-h", "--help", "print this help and exit");
-    printf("%4s, %-20s  %-30s\n", "-i", "--info", "print info about bmp file");
-    printf("%4s  %-20s  %-30s\n", " ", "--input", "set up file to processing");
-    printf("%4s, %-20s  %-30s\n", "-o", "--output", "change standard output file name");
+    printf("%4s  %-20s  %-30s\n", " ", "--info [OPTIONAL]", "print info about bmp file");
+    printf("%4s, %-20s  %-30s\n", "-i", "--input [INP_NAME]", "set up file to processing");
+    printf("%4s, %-20s  %-30s\n", "-o", "--output [OUT_NAME]", "change standard output file name");
 }

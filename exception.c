@@ -20,6 +20,12 @@ size_t check_error(size_t ret_code) {
         case WRONG_BMP_FORMAT:
             fprintf(stderr, "Only the BMP format is supported without compression and with 24-bit color\n");
             break;
+        case EMPTY_ARG:
+            fprintf(stderr, "Flag required an argument\n");
+            break;
+        // case EQUAL_ERROR:
+        // case :
+        // case ERROR
     }
     return ret_code;
 }
