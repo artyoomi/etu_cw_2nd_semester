@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
+#include <regex.h>
 
 #include "bmp.h"
 #include "exception.h"
@@ -14,13 +15,16 @@ typedef struct {
     int8_t info;
     int8_t input;
     int8_t output;
-    int8_t rgbfilt;
+    int8_t rgbfilter;
+    int8_t component_name;
+    int8_t component_value;
 } Config;
 
 typedef struct {
     char* input;
     char* output;
-    char* rgb_comp;
+    char* component_name;           // checks in rgfilter
+    char* component_value;          // in string form, checks in rgbfilter
 } Optarg;
 
 int main(int argc, char** argv)
@@ -32,21 +36,21 @@ int main(int argc, char** argv)
         return NO_ERROR;
     }
 
-    Config config = {0, 0, 0, 0};
-    Optarg optargs = {argv[argc - 1], "out.bmp"};
+    Config config = {0, 0, 0, 0, 0, 0};
+    Optarg optargs = {argv[argc - 1], "out.bmp", NULL, 0};
 
     int32_t optchar;
     
     // to use custom error messages
     //opterr = 0;
         
-    char* short_options = "hI::i:o:r";
+    char* short_options = "hIi:o:";
     struct option long_options[] =  {
         {"help", no_argument, NULL, 'h'}, 
-        {"info", optional_argument, NULL, 'I'},
+        {"info", no_argument, NULL, 'I'},
         {"input", required_argument, NULL, 'i'}, 
         {"output", required_argument, NULL, 'o'},
-        {"rgbfilter", required_argument, NULL, 'r'},
+        {"rgbfilter", no_argument, NULL, 'r'},
         {"component_name", required_argument, NULL, 'n'},
         {"component_value", required_argument, NULL, 'v'},
         {"square", required_argument, NULL, 's'},
@@ -91,12 +95,29 @@ int main(int argc, char** argv)
                     optargs.output = strdup(optarg);
                     break;
                 } else {
-                    check_error(EMPTY_ARG);
-                    return EMPTY_ARG;
+                    // missing arg error
+                    //check_error(EMPTY_ARG);
+                    //return EMPTY_ARG;
                 }
             case 'r':
+                config.rgbfilter = 1;
+                break;
             case 'n':
+                if (optarg != NULL) {
+                    config.component_name = 1;
+                    optargs.component_name = strdup(optarg);
+                    break;
+                } else {
+                    // missing arg error
+                }
             case 'v':
+                if (optarg != NULL) {
+                    config.component_value = 1;
+                    optargs.component_value = strdup(optarg);
+                    break;
+                } else {
+                    // missing arg error
+                }
             case 's':
             case 't':
             case 'S':
@@ -132,7 +153,20 @@ int main(int argc, char** argv)
         print_info_header(bmih);
         return NO_ERROR;
     }
+
+    if (config.rgbfilter) {
+        if (!config.component_name || !config.component_value) {
+            fprintf(stderr, "Missing flags to --rgbfilter, type --help to more information\n");
+            return EMPTY_ARG;
+        } else {
+            ret = rgbfilter(&arr, &bmih, 
+                      optargs.component_name, optargs.component_value);
+            if (check_error(ret))
+                return ret;
+        }
+    }
     
+    // write changes in file
     ret = write_bmp(optargs.output, &arr, &bmfh, &bmih);
     
     for (; optind < argc; optind++) {
@@ -140,5 +174,10 @@ int main(int argc, char** argv)
     }
 
     // !!! add free expresions
+    if (config.input) free(optargs.input);
+    if (config.output) free(optargs.output);
+    if (config.component_name) free(optargs.component_name);
+    if (config.component_value) free (optargs.component_value);
+    
     return NO_ERROR;
 }
