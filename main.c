@@ -6,10 +6,12 @@
 #include <string.h>
 #include <regex.h>
 
-#include "bmp.h"
-#include "exception.h"
-#include "print_funcs.h"
-#include "rgbfilter.h"
+#include "include/bmp.h"
+#include "include/exceptions.h"
+#include "include/print_funcs.h"
+#include "include/rgbfilter.h"
+#include "include/square.h"
+#include "include/parse_funcs.h"
 
 typedef struct {
     int8_t info;
@@ -18,13 +20,25 @@ typedef struct {
     int8_t rgbfilter;
     int8_t component_name;
     int8_t component_value;
+    int8_t square;
+    int8_t left_up;
+    int8_t side_size;
+    int8_t thickness;
+    int8_t color;
+    int8_t fill;
+    int8_t fill_color;
 } Config;
 
 typedef struct {
     char* input;
     char* output;
-    char* component_name;           // checks in rgfilter
-    char* component_value;          // in string form, checks in rgbfilter
+    char* component_name;           // checks in rgbfilter
+    uint8_t component_value;        // in string form, checks in rgbfilter
+    int32_t* left_up;
+    uint32_t side_size;
+    uint32_t thickness;
+    uint8_t* color;
+    uint8_t* fill_color;
 } Optarg;
 
 int main(int argc, char** argv)
@@ -37,10 +51,10 @@ int main(int argc, char** argv)
     }
 
     Config config = {0, 0, 0, 0, 0, 0};
-    Optarg optargs = {argv[argc - 1], "out.bmp", NULL, 0};
+    Optarg optargs = {argv[argc - 1], "out.bmp", NULL, 0, NULL};
 
     int32_t optchar;
-    
+    int32_t ret_val = 0;  
     // to use custom error messages
     //opterr = 0;
         
@@ -50,16 +64,19 @@ int main(int argc, char** argv)
         {"info", no_argument, NULL, 'I'},
         {"input", required_argument, NULL, 'i'}, 
         {"output", required_argument, NULL, 'o'},
+        
         {"rgbfilter", no_argument, NULL, 'r'},
         {"component_name", required_argument, NULL, 'n'},
         {"component_value", required_argument, NULL, 'v'},
-        {"square", required_argument, NULL, 's'},
+        
+        {"square", no_argument, NULL, 's'},
         {"left_up", required_argument, NULL, 't'},
         {"side_size", required_argument, NULL, 'S'},
         {"thickness", required_argument, NULL, 'T'},
         {"color", required_argument, NULL, 'c'},
-        {"fill", required_argument, NULL, 'l'},
+        {"fill", no_argument, NULL, 'l'},
         {"fill_color", required_argument, NULL, 'L'},
+        
         {"exchange", required_argument, NULL, 'e'},
         {"right_down", required_argument, NULL, 'R'},
         {"exchange_type", required_argument, NULL, 'E'},
@@ -70,80 +87,109 @@ int main(int argc, char** argv)
     BitmapFileHeader bmfh;
     BitmapInfoHeader bmih;
     RGB** arr;
-    
+
+    // all configuration logic and parse optargs arguments 
+    // must be in this while loop    
     while ((optchar = getopt_long(argc, argv, short_options, long_options, 
                                   &optind)) != -1) {
         switch (optchar) {
-            case 'h':
+            case 'h': // -h --help
                 print_help(argv[0]);
                 return NO_ERROR;
-            case 'I':
+            case 'I': // -I --info
                 config.info = 1;
                 break;
-            case 'i':
-                if (optarg != NULL) {
-                    config.input = 1;
-                    optargs.input = strdup(optarg);
-                    break;
-                } else {
-                    check_error(EMPTY_ARG);
-                    return EMPTY_ARG;    
-                }
-            case 'o':
-                if (optarg != NULL) {
-                    config.output = 1;
-                    optargs.output = strdup(optarg);
-                    break;
-                } else {
-                    // missing arg error
-                    //check_error(EMPTY_ARG);
-                    //return EMPTY_ARG;
-                }
-            case 'r':
+            case 'i': // -i --input
+                // if (optarg != NULL)
+                // this check useless if opterr != 0
+                // otherwise, a check is needed along with the error output
+                // else { error throw logic }
+                                
+                config.input = 1;
+                optargs.input = strdup(optarg);
+                break;
+            case 'o': // -o --output
+                config.output = 1;
+                optargs.output = strdup(optarg);
+                break;
+            case 'r': // --rgbfilter
                 config.rgbfilter = 1;
                 break;
-            case 'n':
-                if (optarg != NULL) {
-                    config.component_name = 1;
-                    optargs.component_name = strdup(optarg);
-                    break;
-                } else {
-                    // missing arg error
-                }
-            case 'v':
-                if (optarg != NULL) {
-                    config.component_value = 1;
-                    optargs.component_value = strdup(optarg);
-                    break;
-                } else {
-                    // missing arg error
-                }
-            case 's':
-            case 't':
-            case 'S':
-            case 'T':
-            case 'c':
-            case 'l':
-            case 'L':
-            case 'e':
-            case 'R':
-            case 'E':
-            case 'f':
+            case 'n': // --component_name
+                config.component_name = 1;
+                optargs.component_name = strdup(optarg);
                 break;
-            case '?':
-                return ERROR;
+            case 'v': // --component_value
+                config.component_value = 1;
+                ret_val = parse_unsigned_char(optarg, &(optargs.component_value));
+                    
+                // check if parse was succesful
+                if (ret_val != PARSE_ERROR)
+                    break;
+                return ARG_ERROR;
+            case 's': // --square
+                config.square = 1;
+                break;
+            case 't': // --left_up
+                config.left_up = 1;
+                ret_val = parse_coords(optarg, &(optargs.left_up));
+
+                if (ret_val != PARSE_ERROR)
+                    break;
+                return ARG_ERROR;
+            case 'S': // --size_size
+                config.side_size = 1;
+                ret_val = parse_posit_number(optarg, &(optargs.side_size));
+
+                if (ret_val != PARSE_ERROR)
+                    break;
+                return ARG_ERROR;
+            case 'T': // --thickness
+                config.thickness = 1;
+                // parse_side_size contains the necessary logic
+                ret_val = parse_posit_number(optarg, &(optargs.thickness));
+
+                if (ret_val != PARSE_ERROR)
+                    break;
+                return ARG_ERROR;
+            case 'c': // --color
+                config.color = 1;
+                ret_val = parse_comps(optarg, &(optargs.color));
+
+                if (ret_val != PARSE_ERROR)
+                    break;
+                return ARG_ERROR;
+            case 'l': // --fill
+                config.fill = 1;
+                break;
+            case 'L': // --fill_color
+                if (config.fill) {
+                    config.fill_color = 1;
+                    ret_val = parse_comps(optarg, &(optargs.fill_color));
+                    if (ret_val != PARSE_ERROR)
+                        break;
+                }
+                return ARG_ERROR;
+            case 'e': // --exchange
+            case 'R': // --right_down
+            case 'E': // --exchange_type
+            case 'f': // --freq_color
+                break;
+            case '?': // unknown flag
+                return ARG_ERROR;
         }
     }
 
     // check if input and output filename is match
     if (!strcmp(optargs.input, optargs.output)) {
-        fprintf(stderr, "The input and output file name must not match!\n");
-        return ERROR;
+        error_return("Input and output file names musn't be the same!\n", ARG_ERROR);
+        // fprintf(stderr, "Input and output file names musn't be the same!\n");
+        // return ARG_ERROR;
     }
 
     // input bmp file information
-    size_t ret = read_bmp(optargs.input, &arr, &bmfh, &bmih);
-    if (check_error(ret)) return ret;
+    ret_val = read_bmp(optargs.input, &arr, &bmfh, &bmih);
+    if (ret_val) return ret_val;
 
     // print file inforamtion
     if (config.info) {
@@ -156,18 +202,31 @@ int main(int argc, char** argv)
 
     if (config.rgbfilter) {
         if (!config.component_name || !config.component_value) {
-            fprintf(stderr, "Missing flags to --rgbfilter, type --help to more information\n");
-            return EMPTY_ARG;
+            error_return("Missing flags to --rgbfilter, type --help to more information\n",
+                         ARG_ERROR);
         } else {
-            ret = rgbfilter(&arr, &bmih, 
-                      optargs.component_name, optargs.component_value);
-            if (check_error(ret))
-                return ret;
+            ret_val = rgbfilter(&arr, &bmih, 
+                                optargs.component_name, 
+                                optargs.component_value);
+            if (ret_val) return ret_val;
+        }
+    }
+
+    if (config.square) {
+        if (!config.left_up || !config.side_size ||
+            !config.thickness || !config.color)
+            error_return("Missing flags to --square, type --help for more information\n",
+                         ARG_ERROR);
+        else {
+            //ret_val = square();
+            //if (ret_val) return ret_val;
+            //printf("(%d;%d)\n", optargs.left_up[0], optargs.left_up[1]);
         }
     }
     
     // write changes in file
-    ret = write_bmp(optargs.output, &arr, &bmfh, &bmih);
+    ret_val = write_bmp(optargs.output, &arr, &bmfh, &bmih);
+    if (ret_val) return ret_val;
     
     for (; optind < argc; optind++) {
         printf("extra arg is %s\n", argv[optind]);
@@ -177,7 +236,6 @@ int main(int argc, char** argv)
     if (config.input) free(optargs.input);
     if (config.output) free(optargs.output);
     if (config.component_name) free(optargs.component_name);
-    if (config.component_value) free (optargs.component_value);
     
     return NO_ERROR;
 }

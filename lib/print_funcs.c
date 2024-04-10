@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include "print_funcs.h"
+#include "../include/print_funcs.h"
 
 void print_warn_msg(char* exe_name)
 {

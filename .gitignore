@@ -1,0 +1,8 @@
+# Pictures #
+############
+*.bmp
+
+# Executables #
+###############
+main
+cw

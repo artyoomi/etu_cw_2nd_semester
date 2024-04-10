@@ -6,13 +6,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "exceptions.h"
+
 #pragma pack(push, 1)
 typedef struct {
     uint16_t signature;           // идетификация файла BMP и DIB
     uint32_t filesize;            // размер BMP файла в байтах
     uint16_t reserved1;           // зарезервированное пространство
     uint16_t reserved2;           //
-    uint32_t  pixelArrOffset;        // смещение (нач. адрес байта где находится массив пикселей)
+    uint32_t pixelArrOffset;        // смещение (нач. адрес байта где находится массив пикселей)
 } BitmapFileHeader;
 
 typedef struct {
@@ -29,18 +31,20 @@ typedef struct {
     uint32_t importantColorCount; // кол-во важных цветов
 } BitmapInfoHeader;
 
+// thats little-endian.
 typedef struct {
-    uint8_t r;
-    uint8_t g;
     uint8_t b;
+    uint8_t g;
+    uint8_t r;
 } RGB;
 #pragma pack(pop)
 
-size_t read_bmp(const char* file_name, RGB*** arr, 
+int32_t read_bmp(const char* file_name, RGB*** arr, 
                 BitmapFileHeader* bmfh, BitmapInfoHeader* bmif);
+int32_t write_bmp(const char* file_name, RGB*** arr, 
+                 const BitmapFileHeader* bmfh, const BitmapInfoHeader* bmif);
+
 void print_file_header(BitmapFileHeader header);
 void print_info_header(BitmapInfoHeader header);
-size_t write_bmp(const char* file_name, RGB*** arr, 
-                 const BitmapFileHeader* bmfh, const BitmapInfoHeader* bmif);
 
 #endif
