@@ -20,7 +20,9 @@ extern enum {
     ALLOC_ERROR = 41,
     BMP_FORMAT_ERROR = 42,
     ARG_ERROR = 43,
-    PARSE_ERROR = 44
+    PARSE_ERROR = 44,
+    POINTER_ERROR = 45,
+    DICT_ERROR = 46
 } external_exception_t;
 
 #define error_return(msg, error_code) \

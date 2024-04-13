@@ -7,18 +7,11 @@ int32_t read_bmp(const char* file_name, RGB*** arr,
     FILE* fd = fopen(file_name, "rb");
     if (fd == NULL) {
         error_return_warg("The %s file was not open\n", IO_ERROR, file_name);
-        // fprintf(stderr, "The %s file was not open\n", file_name);
-        // return IO_ERROR;
     }
 
     if (fread(bmfh, sizeof(BitmapFileHeader), 1, fd) != 1) {
         error_return_wfd("BitmapFileHeader was no read\n",
                          BMP_FORMAT_ERROR, fd);
-        // error_return(fd, "BitmapFileHeader was no read\n",
-        //              BMP_FORMAT_ERROR);
-        // fclose(fd);
-        // fprintf(stderr, "Error: BitmapFileHeader was not read\n");
-        // return IO_ERROR;
     }
     if (bmfh->signature != 0x4D42) {
          // exit from program with error
@@ -32,9 +25,6 @@ int32_t read_bmp(const char* file_name, RGB*** arr,
     if (fread(bmif, sizeof(BitmapInfoHeader), 1, fd) != 1)  {
         error_return_wfd("BitmapInfoHeader was no read\n",
                          IO_ERROR, fd);
-        // fclose(fd);
-        // fprintf(stderr, "Error: BitmapInfoHeader was not read\n");
-        // return IO_ERROR;
     }
 
     // turn on after find image without compression and with 24-bit color
@@ -42,8 +32,6 @@ int32_t read_bmp(const char* file_name, RGB*** arr,
         || bmif->compression != 0 || bmif->colorsInColorTable != 0) {
         error_return_wfd("This program can't process BMP image like this\n",
                          BMP_FORMAT_ERROR, fd);
-        // fclose(fd);
-        // return WRONG_BMP_FORMAT;
     }
     fseek(fd, bmfh->pixelArrOffset, SEEK_SET);
 
@@ -55,22 +43,16 @@ int32_t read_bmp(const char* file_name, RGB*** arr,
     if ((*arr) == NULL) {
         error_return_wfd("Allocating memory to pixels array lines return NULL",
                          ALLOC_ERROR, fd);
-        // fclose(fd);
-        // return MALLOC_ERROR;
     }
     for (size_t i = 0; i < H; i++) {
         (*arr)[i] = (RGB*)calloc(padded_width, 1);
         if ((*arr)[i] == NULL) {
             error_return_wfd("Allocating memory to pixels array line return NULL\n",
                              ALLOC_ERROR, fd);
-            // fclose(fd);
-            // return MALLOC_ERROR;
         }
         
         if (fread((*arr)[i], 1, padded_width, fd) < padded_width) {
             error_return_wfd("Pixels array line was not read\n", IO_ERROR, fd);
-            // fclose(fd);
-            // return FRD_ERROR;
         }        
     }
     
@@ -91,20 +73,14 @@ int32_t write_bmp(const char* file_name, RGB*** arr,
     if (fd == NULL) {
         error_return_warg("This %s file was not open\n",
                           IO_ERROR, file_name);
-        // fprintf(stderr, "The %s file was not open\n", file_name);
-        // return IO_ERROR;
     }
     
     if (fwrite(bmfh, sizeof(BitmapFileHeader), 1, fd) != 1) {
         error_return_wfd("BitmapFileHeader was not written\n", IO_ERROR, fd);
-        // fclose(fd);
-        // return FWRT_ERROR;
     }
     
     if (fwrite(bmih, sizeof(BitmapInfoHeader), 1, fd) != 1) {
         error_return_wfd("BitmapInfoHeader was not written\n", IO_ERROR, fd);
-        // fclose(fd);
-        // return FWRT_ERROR;
     }
 
     fseek(fd, bmfh->pixelArrOffset, SEEK_SET);
@@ -112,8 +88,6 @@ int32_t write_bmp(const char* file_name, RGB*** arr,
     for (size_t i = 0; i < H; i++) {
         if (fwrite((*arr)[i], 1, padded_width, fd) < padded_width) {
             error_return_wfd("Pixels array line no written\n", IO_ERROR, fd);
-            // fclose(fd);
-            // return FWRT_ERROR;
         }
     }
     

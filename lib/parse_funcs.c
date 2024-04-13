@@ -32,7 +32,7 @@ int32_t parse_unsigned_char(const char* arg, uint8_t* val)
     }
 }
 
-int32_t parse_coords(const char* arg, int32_t** val_arr)
+int32_t parse_coords(const char* arg, int64_t** val_arr)
 {
     const uint32_t max_groups = 3;
     regex_t regex;
@@ -49,7 +49,7 @@ int32_t parse_coords(const char* arg, int32_t** val_arr)
     char buffer[100];
 
     // alloc memory to array with x and y component
-    *val_arr = (uint32_t*)malloc((max_groups - 1) * sizeof(uint32_t));
+    *val_arr = (int64_t*)malloc((max_groups - 1) * sizeof(int64_t));
     if (!reti) {
         //*val_arr = 
         for (size_t i = 1; i < max_groups; i++) {
@@ -111,7 +111,7 @@ int32_t parse_posit_number(const char* arg, uint32_t* val)
     }
 }
 
-int32_t parse_comps(const char* arg, uint8_t** val_arr)
+int32_t parse_comps(const char* arg, RGB *color)
 {
     const uint32_t max_groups = 4;
     regex_t regex;
@@ -132,7 +132,6 @@ int32_t parse_comps(const char* arg, uint8_t** val_arr)
     char buffer[100];
 
     // alloc memory to array with r, g and b components
-    *val_arr = (uint8_t*)malloc((max_groups - 1) * sizeof(uint8_t));
     if (!reti) {
         for (size_t i = 1; i < max_groups; i++) {
 				if (groups[i].rm_so == -1)
@@ -142,7 +141,13 @@ int32_t parse_comps(const char* arg, uint8_t** val_arr)
 				    buffer[buf_ind++] = arg[j];
 				    
 				buffer[buf_ind] = '\0';
-				(*val_arr)[i - 1] = atoi(buffer);
+				//(*val_arr)[i - 1] = atoi(buffer);
+				if (i - 1 == 0)
+				    color->r = atoi(buffer);
+				else if (i - 1 == 0)
+				    color->g = atoi(buffer);
+				else if (i - 2 == 0)
+				    color->b = atoi(buffer);
 				buf_ind = 0;
 		}
 		        

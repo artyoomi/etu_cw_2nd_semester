@@ -11,6 +11,8 @@
 #include "include/print_funcs.h"
 #include "include/rgbfilter.h"
 #include "include/square.h"
+#include "include/exchange.h"
+#include "include/freq_color.h"
 #include "include/parse_funcs.h"
 
 typedef struct {
@@ -27,6 +29,10 @@ typedef struct {
     int8_t color;
     int8_t fill;
     int8_t fill_color;
+    int8_t freq_color;
+    int8_t exchange;
+    int8_t right_down;
+    int8_t exchange_type;
 } Config;
 
 typedef struct {
@@ -34,11 +40,13 @@ typedef struct {
     char* output;
     char* component_name;           // checks in rgbfilter
     uint8_t component_value;        // in string form, checks in rgbfilter
-    int32_t* left_up;
+    int64_t* left_up;
     uint32_t side_size;
     uint32_t thickness;
-    uint8_t* color;
-    uint8_t* fill_color;
+    RGB color;
+    RGB fill_color;
+    int64_t* right_down;
+    char *exchange_type;
 } Optarg;
 
 int main(int argc, char** argv)
@@ -51,7 +59,7 @@ int main(int argc, char** argv)
     }
 
     Config config = {0, 0, 0, 0, 0, 0};
-    Optarg optargs = {argv[argc - 1], "out.bmp", NULL, 0, NULL};
+    Optarg optargs = {NULL, NULL, NULL, 0, NULL};
 
     int32_t optchar;
     int32_t ret_val = 0;  
@@ -80,7 +88,7 @@ int main(int argc, char** argv)
         {"exchange", required_argument, NULL, 'e'},
         {"right_down", required_argument, NULL, 'R'},
         {"exchange_type", required_argument, NULL, 'E'},
-        {"freq_color", required_argument, NULL, 'f'},
+        {"freq_color", no_argument, NULL, 'f'},
         {NULL, no_argument, NULL, 0}
     };
 
@@ -171,14 +179,32 @@ int main(int argc, char** argv)
                 }
                 return ARG_ERROR;
             case 'e': // --exchange
+                config.exchange = 1;
+                break;
             case 'R': // --right_down
+                config.right_down = 1;
+                ret_val = parse_coords(optarg, &(optargs.right_down));
+
+                if (ret_val != PARSE_ERROR)
+                    break;
+                return ARG_ERROR;    
             case 'E': // --exchange_type
+                config.exchange_type = 1;
+                optargs.exchange_type = strdup(optarg);
+                break;                
             case 'f': // --freq_color
+                config.freq_color = 1;
                 break;
             case '?': // unknown flag
                 return ARG_ERROR;
         }
     }
+
+    if (!config.input)
+        optargs.input = strdup(argv[argc - 1]);
+
+    if (!config.output)
+        optargs.output = strdup("out.bmp");
 
     // check if input and output filename is match
     if (!strcmp(optargs.input, optargs.output)) {
@@ -200,6 +226,7 @@ int main(int argc, char** argv)
         return NO_ERROR;
     }
 
+    // 1. rgbfilter subtask
     if (config.rgbfilter) {
         if (!config.component_name || !config.component_value) {
             error_return("Missing flags to --rgbfilter, type --help to more information\n",
@@ -208,20 +235,49 @@ int main(int argc, char** argv)
             ret_val = rgbfilter(&arr, &bmih, 
                                 optargs.component_name, 
                                 optargs.component_value);
-            if (ret_val) return ret_val;
+            if (ret_val)
+                return ret_val;
         }
     }
 
+    // 2. square subtask
     if (config.square) {
         if (!config.left_up || !config.side_size ||
             !config.thickness || !config.color)
             error_return("Missing flags to --square, type --help for more information\n",
                          ARG_ERROR);
+        else if (!config.fill && config.fill_color || 
+                 config.fill && !config.fill_color)
+            error_return("Flag --fill and --fill_color nedd to be used together\n", ARG_ERROR);
         else {
             //ret_val = square();
             //if (ret_val) return ret_val;
             //printf("(%d;%d)\n", optargs.left_up[0], optargs.left_up[1]);
+            draw_line(&arr, &bmih, 5, 15, 10, 2, 
+                      optargs.thickness, optargs.color);
         }
+    }
+
+    // 3. exchange subtask
+    if (config.exchange) {
+        if (!config.left_up || !config.right_down || !config.exchange_type)
+            error_return("--exchange need flags!\n", ARG_ERROR);    
+        else {
+            ret_val = exchange(&arr, optargs.left_up,
+                               optargs.right_down, optargs.exchange_type);
+            if (ret_val)
+                return ret_val; 
+        }
+    }
+    
+    // 4. freq_color subtask
+    if (config.freq_color) {
+        if (!config.color)
+            error_return("--freq_color need --color flag!\n", ARG_ERROR); 
+        
+        ret_val = freq_color(&arr, &bmih, optargs.color);
+        if (ret_val)
+            return ret_val;    
     }
     
     // write changes in file
@@ -232,10 +288,21 @@ int main(int argc, char** argv)
         printf("extra arg is %s\n", argv[optind]);
     }
 
-    // !!! add free expresions
-    if (config.input) free(optargs.input);
-    if (config.output) free(optargs.output);
-    if (config.component_name) free(optargs.component_name);
+    // free optargs
+    free(optargs.input);
+    free(optargs.output);
+    if (config.component_name)
+        free(optargs.component_name);
+    if (config.left_up)
+        free(optargs.left_up);
+    if (config.exchange_type)
+        free(optargs.exchange_type);
+
+    // free pixels array
+    for (size_t i = 0; i < bmih.height; i++) {
+        free(arr[i]);
+    }
+    free(arr);
     
     return NO_ERROR;
 }
