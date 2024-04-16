@@ -66,7 +66,7 @@ int main(int argc, char** argv)
     // to use custom error messages
     //opterr = 0;
         
-    char* short_options = "hIi:o:";
+    char* short_options = "hIi:o:rn:v:sS:T:c:lC:eR:E:f";
     struct option long_options[] =  {
         {"help", no_argument, NULL, 'h'}, 
         {"info", no_argument, NULL, 'I'},
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
         {"thickness", required_argument, NULL, 'T'},
         {"color", required_argument, NULL, 'c'},
         {"fill", no_argument, NULL, 'l'},
-        {"fill_color", required_argument, NULL, 'L'},
+        {"fill_color", required_argument, NULL, 'C'},
         
         {"exchange", required_argument, NULL, 'e'},
         {"right_down", required_argument, NULL, 'R'},
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
             case 'l': // --fill
                 config.fill = 1;
                 break;
-            case 'L': // --fill_color
+            case 'C': // --fill_color
                 if (config.fill) {
                     config.fill_color = 1;
                     ret_val = parse_comps(optarg, &(optargs.fill_color));
@@ -207,7 +207,7 @@ int main(int argc, char** argv)
         optargs.output = strdup("out.bmp");
 
     // check if input and output filename is match
-    if (!strcmp(optargs.input, optargs.output)) {
+    if (!strcmp(optargs.input, optargs.output) && !config.info) {
         error_return("Input and output file names musn't be the same!\n", ARG_ERROR);
         // fprintf(stderr, "Input and output file names musn't be the same!\n");
         // return ARG_ERROR;
@@ -253,7 +253,7 @@ int main(int argc, char** argv)
             //ret_val = square();
             //if (ret_val) return ret_val;
             //printf("(%d;%d)\n", optargs.left_up[0], optargs.left_up[1]);
-            draw_line(&arr, &bmih, 5, 15, 10, 2, 
+            draw_line(&arr, &bmih, optargs.left_up[0], optargs.left_up[1], 10, 2, 
                       optargs.thickness, optargs.color);
         }
     }
@@ -263,7 +263,7 @@ int main(int argc, char** argv)
         if (!config.left_up || !config.right_down || !config.exchange_type)
             error_return("--exchange need flags!\n", ARG_ERROR);    
         else {
-            ret_val = exchange(&arr, optargs.left_up,
+            ret_val = exchange(&arr, &bmih, optargs.left_up,
                                optargs.right_down, optargs.exchange_type);
             if (ret_val)
                 return ret_val; 

@@ -9,7 +9,7 @@ int32_t read_bmp(const char* file_name, RGB*** arr,
         error_return_warg("The %s file was not open\n", IO_ERROR, file_name);
     }
 
-    if (fread(bmfh, sizeof(BitmapFileHeader), 1, fd) != 1) {
+    if (!fread(bmfh, 1, sizeof(BitmapFileHeader), fd)) {
         error_return_wfd("BitmapFileHeader was no read\n",
                          BMP_FORMAT_ERROR, fd);
     }
@@ -20,19 +20,19 @@ int32_t read_bmp(const char* file_name, RGB*** arr,
          // fclose(fd);
          // fprintf(stderr, "Error: BMP file signature doesnt match BM\n");
          // return BMP_FORMAT_ERROR;
-    }   
+    }  
   
-    if (fread(bmif, sizeof(BitmapInfoHeader), 1, fd) != 1)  {
+    if (!fread(bmif, 1, sizeof(BitmapInfoHeader), fd))  {
         error_return_wfd("BitmapInfoHeader was no read\n",
                          IO_ERROR, fd);
     }
 
     // turn on after find image without compression and with 24-bit color
-    if (bmif->bitsPerPixel != 24 
+    /*if (bmif->bitsPerPixel != 24 
         || bmif->compression != 0 || bmif->colorsInColorTable != 0) {
         error_return_wfd("This program can't process BMP image like this\n",
                          BMP_FORMAT_ERROR, fd);
-    }
+    }*/
     fseek(fd, bmfh->pixelArrOffset, SEEK_SET);
 
     uint32_t H = bmif->height;
@@ -51,9 +51,11 @@ int32_t read_bmp(const char* file_name, RGB*** arr,
                              ALLOC_ERROR, fd);
         }
         
-        if (fread((*arr)[i], 1, padded_width, fd) < padded_width) {
+        size_t ret_val = fread((*arr)[i], padded_width, 1, fd);
+        /*if (fread((*arr)[i], 1, padded_width, fd) < padded_width) {
             error_return_wfd("Pixels array line was not read\n", IO_ERROR, fd);
-        }        
+        }*/       
+        fprintf(stderr, "indicator is [%lu]\n", ret_val);
     }
     
     fclose(fd);

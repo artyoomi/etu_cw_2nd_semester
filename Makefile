@@ -10,7 +10,8 @@ OBJ = main.o \
 	  square.o \
 	  exchange.o \
 	  freq_color.o \
-	  dictionary.o
+	  dictionary.o \
+	  etc.o
 
 main: $(OBJ)
 	$(CC) -g -o $(PROJ_NAME) $(OBJ) -lm
@@ -42,3 +43,6 @@ freq_color.o: lib/freq_color.c include/freq_color.h
 
 dictionary.o: lib/dictionary.c include/dictionary.h
 	$(CC) $(FLAGS) lib/dictionary.c
+
+etc.o: lib/etc.c include/etc.h
+	$(CC) $(FLAGS) lib/etc.c

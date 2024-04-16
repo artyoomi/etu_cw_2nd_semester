@@ -11,7 +11,7 @@ int32_t freq_color(RGB*** arr, const BitmapInfoHeader *bmih, RGB color)
 
     // add colors in dictonary
     for (uint32_t i = 0; i < H; i++) {
-        for (uint32_t j = 0; j < W - 1; j++) {
+        for (uint32_t j = 0; j < W; j++) {
             ret_val = dict_add(&dict, (*arr)[i][j]);
             if (ret_val)
                 return DICT_ERROR;

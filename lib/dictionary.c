@@ -8,8 +8,9 @@ int32_t dict_add(Dict **dict, RGB color)
     // if pointer to dict is NULL -> create dict
     if ((*dict) == NULL) {
         (*dict) = (Dict*)malloc(sizeof(Dict));
-        (*dict)->len = 1;
-        (*dict)->pairs = (Pair*)malloc(sizeof(Pair));
+        (*dict)->pairs = (Pair*)malloc(ALLOC_BLOCK * sizeof(Pair));
+        (*dict)->len = 0;
+        (*dict)->alloc_size = ALLOC_BLOCK;
         (*dict)->pairs[0].color = color;
         (*dict)->pairs[0].count = 1;
 
@@ -32,9 +33,11 @@ int32_t dict_add(Dict **dict, RGB color)
         (*dict)->pairs[target_ind].count++;
         return NO_ERROR;
     }
-
-    (*dict)->pairs = (Pair*)realloc((*dict)->pairs, 
-                                    ((*dict)->len + 1) * sizeof(Pair));
+    if ((*dict)->alloc_size <= (*dict)->len) {
+        (*dict)->pairs = (Pair*)realloc((*dict)->pairs, 
+                                    ((*dict)->len + ALLOC_BLOCK) * sizeof(Pair));
+        (*dict)->alloc_size += ALLOC_BLOCK;
+    }
     if (!(*dict)->pairs)
         error_return("Reallocate for Pair array failed!\n", ALLOC_ERROR);
     
