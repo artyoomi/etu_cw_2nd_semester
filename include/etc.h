@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-void swap_int64(int64_t *a, int64_t *b);
+void swap_int64(int64_t* a, int64_t* b);
 
 #endif

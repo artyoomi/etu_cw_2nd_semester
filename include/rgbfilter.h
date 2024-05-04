@@ -10,6 +10,8 @@
 #include "parse_funcs.h"
 
 uint8_t identify(const char*);
-int32_t rgbfilter(RGB***, const BitmapInfoHeader*, const char*, const uint8_t);
+int32_t rgbfilter(RGB*** arr,
+                  const char* compt_name, const uint8_t compt_val,
+                  uint32_t H, uint32_t W);
 
 #endif

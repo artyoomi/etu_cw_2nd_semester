@@ -4,11 +4,11 @@
 int32_t parse_unsigned_char(const char* arg, uint8_t* val)
 {
     regex_t regex;
-    int32_t reti = regcomp(&regex, "^([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-5]{2})$", REG_EXTENDED);
+    int32_t reti = regcomp(&regex,
+                           "^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$",
+                           REG_EXTENDED);
     if (reti) {
         error_return("Could not compile regex\n", PARSE_ERROR);
-        // fprintf(stderr, "Error: Could not compile regex!\n");
-        // return PARSE_ERROR;
     }
     
     reti = regexec(&regex, arg, 0, NULL, 0);
@@ -20,15 +20,12 @@ int32_t parse_unsigned_char(const char* arg, uint8_t* val)
         regfree(&regex);
         error_return("Component value must be in range [0..255]\n",
                      PARSE_ERROR);
-        // fprintf(stderr, "Component value must be in range [0..255]\n");
-        // return PARSE_ERROR;
     } else {
 	    char err_buf[100];
 		regerror(reti, &regex, err_buf, sizeof(err_buf));
         regfree(&regex);
-		error_return_warg("Regex match failed %s\n", PARSE_ERROR, err_buf);
-		// fprintf(stderr, "Regex match failed %s\n", err_buf);
-		// return PARSE_ERROR;
+		error_return_warg("Regex match failed %s\n",
+		                  PARSE_ERROR, err_buf);
     }
 }
 
@@ -84,11 +81,8 @@ int32_t parse_posit_number(const char* arg, uint32_t* val)
 {
     regex_t regex;
     int32_t reti = regcomp(&regex, "^[1-9][0-9]*$", REG_EXTENDED);
-    if (reti) {
+    if (reti)
         error_return("Could not compile regex\n", PARSE_ERROR);
-        // fprintf(stderr, "Error: Could not compile regex!\n");
-        // return PARSE_ERROR;
-    }
     
     reti = regexec(&regex, arg, 0, NULL, 0);
     if (!reti) {
@@ -99,29 +93,26 @@ int32_t parse_posit_number(const char* arg, uint32_t* val)
         regfree(&regex);
         error_return("Component value must be greater than 0\n",
                      PARSE_ERROR);
-        // fprintf(stderr, "Component value must be in range [0..255]\n");
-        // return PARSE_ERROR;
     } else {
 	    char err_buf[100];
 		regerror(reti, &regex, err_buf, sizeof(err_buf));
         regfree(&regex);
-		error_return_warg("Regex match failed %s\n", PARSE_ERROR, err_buf);
-		// fprintf(stderr, "Regex match failed %s\n", err_buf);
-		// return PARSE_ERROR;
+		error_return_warg("Regex match failed %s\n",
+		                  PARSE_ERROR, err_buf);
     }
 }
 
-int32_t parse_comps(const char* arg, RGB *color)
+int32_t parse_comps(const char* arg, RGB* color)
 {
     const uint32_t max_groups = 4;
     regex_t regex;
     regmatch_t groups[max_groups];
     
-    const char* reg_str = "^([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-5]{2})"
+    const char* reg_str = "^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])"
                           "\\." 
-                          "([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-5]{2})"
-                           "\\."
-                           "([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-5]{2})$";    
+                          "([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])"
+                          "\\."
+                          "([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$";    
     int32_t reti = regcomp(&regex, reg_str, REG_EXTENDED);
     if (reti) {
         error_return("Could not compile regex\n", PARSE_ERROR);
@@ -129,7 +120,7 @@ int32_t parse_comps(const char* arg, RGB *color)
     
     reti = regexec(&regex, arg, max_groups, groups, 0);
     uint8_t buf_ind = 0;
-    char buffer[100];
+    char buffer[100] = "";
 
     // alloc memory to array with r, g and b components
     if (!reti) {
@@ -144,9 +135,9 @@ int32_t parse_comps(const char* arg, RGB *color)
 				//(*val_arr)[i - 1] = atoi(buffer);
 				if (i - 1 == 0)
 				    color->r = atoi(buffer);
-				else if (i - 1 == 0)
-				    color->g = atoi(buffer);
 				else if (i - 2 == 0)
+				    color->g = atoi(buffer);
+				else if (i - 3 == 0)
 				    color->b = atoi(buffer);
 				buf_ind = 0;
 		}
@@ -155,12 +146,13 @@ int32_t parse_comps(const char* arg, RGB *color)
         return NO_ERROR;
     } else if (reti == REG_NOMATCH) {
         regfree(&regex);
-            error_return("Component values must be in range [0..255]\n",
-                         PARSE_ERROR);
+        error_return("Component values must be in range [0..255]\n", 
+                     PARSE_ERROR);
     } else {
         char err_buf[100];
         regerror(reti, &regex, err_buf, sizeof(err_buf));
         regfree(&regex);
-        error_return_warg("Regex match failed %s\n", PARSE_ERROR, err_buf);
+        error_return_warg("Regex match failed %s\n",
+                          PARSE_ERROR, err_buf);
     }
 }

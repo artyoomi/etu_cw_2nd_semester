@@ -7,14 +7,14 @@ OBJ = main.o \
 	  print_funcs.o \
 	  rgbfilter.o \
 	  parse_funcs.o \
-	  square.o \
+	  draw.o \
 	  exchange.o \
 	  freq_color.o \
-	  dictionary.o \
-	  etc.o
+	  etc.o \
+	  image.o
 
 main: $(OBJ)
-	$(CC) -g -o $(PROJ_NAME) $(OBJ) -lm
+	$(CC) -g -Wall -Werror  -o $(PROJ_NAME) $(OBJ) -lm
 	rm *.o
 
 main.o: main.c
@@ -32,8 +32,8 @@ rgbfilter.o: lib/rgbfilter.c include/rgbfilter.h
 parse_funcs.o: lib/parse_funcs.c include/parse_funcs.h
 	$(CC) $(FLAGS) lib/parse_funcs.c
 
-square.o: lib/square.c include/square.h
-	$(CC) $(FLAGS) lib/square.c
+draw.o: lib/draw.c include/draw.h
+	$(CC) $(FLAGS) lib/draw.c
 
 exchange.o: lib/exchange.c include/exchange.h
 	$(CC) $(FLAGS) lib/exchange.c
@@ -41,8 +41,8 @@ exchange.o: lib/exchange.c include/exchange.h
 freq_color.o: lib/freq_color.c include/freq_color.h
 	$(CC) $(FLAGS) lib/freq_color.c
 
-dictionary.o: lib/dictionary.c include/dictionary.h
-	$(CC) $(FLAGS) lib/dictionary.c
-
 etc.o: lib/etc.c include/etc.h
 	$(CC) $(FLAGS) lib/etc.c
+
+image.o: lib/image.c include/image.h
+	$(CC) $(FLAGS) lib/image.c

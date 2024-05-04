@@ -4,9 +4,8 @@
 #include <stdint.h>
 
 #include "bmp.h"
-#include "dictionary.h"
 #include "exceptions.h"
 
-int32_t freq_color(RGB*** arr, const BitmapInfoHeader *bmih, RGB color);
+void freq_color(RGB*** arr, RGB color, uint32_t H, uint32_t W);
 
 #endif
