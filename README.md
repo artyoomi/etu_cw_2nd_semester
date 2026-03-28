@@ -1,5 +1,10 @@
-## BMP file format processing program with CLI.
-This project is ETU "LETI" 2-nd semester course work in the Programming discipline. The purpose of the course work is to gain skills in working with BMP images in the C language. Saved as a keepsake.
+## Description
+
+Laboratory work on programming at St. Petersburg Electrotechnical
+University at Applied Mathematics and Computer Science program in the 2th
+semester in 2024.
+
+The purpose of the course work is to gain skills in working with BMP images in the C language. Saved as a keepsake.
 
 To compile program type "make" in command line from top project directory.\
 Use **"./cw --help"** to see help.
